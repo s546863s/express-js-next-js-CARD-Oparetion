@@ -52,6 +52,18 @@ const run = async () => {
       res.send(user);
     });
 
+    // data Delete 
+    app.delete('/users/:id', async(req, res)=>{
+      const id = req.params.id;
+      const query = {
+        _id: new ObjectId(id)
+      }
+      const result = await userCollection.deleteOne(query);
+      res.send(result); 
+
+
+    })
+
 // server check
     await client.db("admin").command({ ping: 1 });
     console.log("Ping success ✅");
@@ -67,6 +79,8 @@ run().catch(console.dir);
 app.get("/", (req, res) => {
   res.send("Simple CRUD server is running 🚀");
 });
+
+
 
 // server listen
 app.listen(port, () => {
