@@ -1,72 +1,74 @@
- require('dotenv').config();
+require('dotenv').config();
 const express = require("express");
+const cors = require("cors");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const app = express();
-const cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
 const port = process.env.PORT || 8000;
-app.use(cors())
+
+// middleware
+app.use(cors());
 app.use(express.json());
+
+// env
 const uri = process.env.MONGODB_URI;
 
+// Mongo client
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
-const run = async ()=>{
+// global collection
+let userCollection;
 
-try{
+// main function
+const run = async () => {
+  try {
     await client.connect();
-  // Get the database and collection on which to run the operation
-    // const database = client.db("sample_mflix");
-    // const movies = database.collection("movies");
-
-  // Get the database and collection on which to run the operation
 
     const db = client.db("simpleCrud");
-    const userCollection = db.collection("users");
-    
-app.get('/users', async(req, res) =>{
+    userCollection = db.collection("users");
 
-    
-    // Execute query Cursor added here
-    const cursor =  userCollection.find();
-    const result = await cursor.toArray();
-    res.send(result);
+    console.log("MongoDB Connected");
 
+// GET all users
+    app.get("/users", async (req, res) => {
+      const users = await userCollection.find().toArray();
+      res.send(users);
+    });
 
+// GET single user
+    app.get("/users/:id", async (req, res) => {
+      const id = req.params.id;
 
-})
+      const user = await userCollection.findOne({
+        _id: new ObjectId(id),
+      });
 
+      res.send(user);
+    });
 
+// server check
+    await client.db("admin").command({ ping: 1 });
+    console.log("Ping success ✅");
 
+  } catch (error) {
+    console.error(error);
+  }
+};
 
-    await client.db("admin").command({ping: 1});
-    console.log("Connected to MongoDB")
-}
-finally{
+run().catch(console.dir);
 
-// await client.close();
+// root route
+app.get("/", (req, res) => {
+  res.send("Simple CRUD server is running 🚀");
+});
 
-}
-}
-run().catch(console.dir)
-
-
-app.get("/", (req, res) =>{
-    res.send("Simple CRUD server is serving You!")
-})
-
-
-
-app.listen(port, ()=>{
-    console.log(`Simple CRUD server is running on port http://localhost:${port}`)
-})
-
-
-
-
+// server listen
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
